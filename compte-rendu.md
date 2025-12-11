@@ -22,7 +22,7 @@ Chorouk dghoughi
 ## 1. Le Contexte Métier et la Mission
 
 ### Le Problème (Business Case)
-Contrairement au cas médical (cancer), nous sommes ici face à un enjeu de **Cybersécurité Mondiale**. Les entreprises et gouvernements subissent des attaques variées générant des pertes financières massives.
+Nous sommes ici face à un enjeu de **Cybersécurité Mondiale**. Les entreprises et gouvernements subissent des attaques variées générant des pertes financières massives.
 * **Objectif :** Créer un modèle d'IA capable de classifier/prédire la nature de la menace (la Cible comporte ici **72 classes** distinctes, ce qui est beaucoup plus complexe qu'un problème binaire).
 * **L'Enjeu critique :** Identifier correctement le type d'attaque ou l'attaquant permet d'activer la bonne stratégie de défense (ex: Firewall vs IA-based detection) et de minimiser les pertes financières et le vol de données.
 
