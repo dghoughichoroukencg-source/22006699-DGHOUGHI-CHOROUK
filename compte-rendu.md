@@ -30,6 +30,54 @@ Nous sommes ici face à un enjeu de **Cybersécurité Mondiale**. Les entreprise
 Le dataset analysé dans le notebook contient **3000 observations** et **10 colonnes**.
 * **Features (X) :** Variables mixtes incluant l'année (`Year`), les pertes financières (`Financial Loss`), le nombre d'utilisateurs affectés, etc.
 * **Target (y) :** Une variable catégorielle très fragmentée avec **72 classes uniques**, ce qui rend la tâche de classification particulièrement ardue pour un modèle aléatoire.
+* 1. Contexte et Enjeux
+Avec la numérisation croissante des infrastructures mondiales, le volume et la complexité des cyberattaques ont explosé entre 2015 et 2024. Les méthodes traditionnelles de surveillance manuelles ne suffisent plus face à la rapidité des attaques modernes. Ce projet vise à exploiter l'Intelligence Artificielle pour renforcer la sécurité des réseaux en automatisant la détection des intrusions.
+
+2. Objectifs du Projet
+L'objectif principal est de développer un modèle de Machine Learning (Apprentissage Supervisé) capable de :
+
+Analyser les logs de trafic réseau historiques.
+
+Identifier les modèles (patterns) suspects.
+
+Classifier avec précision le type d'attaque (Malware, DDoS, Phishing, Intrusion, etc.) ou de déterminer si le trafic est bénin.
+
+3. Les Données (Dataset)
+Le projet s'appuie sur le jeu de données Global Cybersecurity Threats, couvrant une période de 9 ans (2015-2024).
+
+Source : Kaggle (Auteur : Atharva Soundankar).
+
+Volume : Données structurées représentant des événements de cybersécurité.
+
+Variables Clés (Features) : Le dataset contient probablement des informations techniques telles que les adresses IP (source/destination), les ports, les protocoles utilisés, la géolocalisation, et l'horodatage.
+
+Cible (Target) : La catégorie de l'attaque (ex: 'Ransomware', 'Botnet', 'Benign', etc.).
+
+4. Méthodologie Technique
+Le projet suit un pipeline de Data Science rigoureux :
+Exploration et Nettoyage (EDA & Cleaning) :
+Gestion des valeurs manquantes et des données bruitées.
+Analyse statistique de la répartition des attaques (déséquilibre des classes).
+Visualisation des corrélations pour identifier les variables les plus influentes.
+Prétraitement (Preprocessing) :
+Encodage : Transformation des variables catégorielles (ex: Protocoles) en format numérique via One-Hot Encoding.
+Normalisation : Mise à l'échelle des données numériques si nécessaire.
+Modélisation (Modeling) :
+Utilisation de l'algorithme Random Forest Classifier.
+Choix de cet algorithme pour sa robustesse face au sur-apprentissage et sa capacité à gérer un grand nombre de variables et de classes.
+Gestion du déséquilibre des classes (paramètre class_weight='balanced').
+
+5. Résultats et Évaluation
+La performance du modèle est évaluée via plusieurs métriques :
+Accuracy : Taux global de bonnes prédictions.
+Matrice de Confusion : Pour visualiser les erreurs de classification entre les différents types d'attaques (ex: confondre un DDoS avec du trafic normal).
+Feature Importance : Identification des facteurs techniques (ex: Port de destination) qui sont les plus déterminants pour prédire une attaque.
+
+6. Impact Business
+Ce modèle permettrait à une équipe SOC (Security Operations Center) de :
+Réduire le temps de réaction face à une menace.
+Diminuer les "faux positifs" (fausses alertes).
+Prioriser les interventions sur les attaques les plus critiques.
 
 ---
 
@@ -39,201 +87,169 @@ C'est une excellente initiative. Pour respecter rigoureusement la structure péd
 
 J'ai conservé toute la logique spécifique à ton dataset de Cybersécurité (gestion des 72 classes, encodage One-Hot, imputation mixte) mais je l'ai habillée avec les commentaires, les étapes numérotées et les affichages "pas à pas" typiques du fichier de correction.
 
-Voici le code transformé :
-
-```python
-# ==============================================================================
-# 📘 PROJET DATA SCIENCE : CYBERSECURITY THREAT ANALYSIS
-# ==============================================================================
-
-# Objectif : Nettoyer, Explorer et Modéliser des menaces de cybersécurité.
-# ==============================================================================
-
 import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
 import seaborn as sns
 
-# Modules Scikit-Learn
+# Scikit-Learn
 from sklearn.model_selection import train_test_split
 from sklearn.impute import SimpleImputer
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.metrics import accuracy_score, classification_report, confusion_matrix
+from sklearn.preprocessing import LabelEncoder
+from sklearn.tree import plot_tree
 
 # Configuration esthétique
-sns.set_theme(style="whitegrid")
+sns.set_theme(style="whitegrid", palette="muted")
+plt.rcParams['figure.figsize'] = (12, 6)
 import warnings
-warnings.filterwarnings('ignore') # Silence les alertes pour la clarté
+warnings.filterwarnings('ignore')
 
-print("1. Bibliothèques importées. Prêt à démarrer.\n")
+# ==============================================================================
+# 1. CONFIGURATION ET CHARGEMENT (Avec mode Démo)
+# ==============================================================================
+print("--- ÉTAPE 1 : CHARGEMENT DES DONNÉES ---")
 
-# ------------------------------------------------------------------------------
-# 2. CHARGEMENT DES DONNÉES (L'Input)
-# ------------------------------------------------------------------------------
-print("2. Chargement du dataset...")
+# Mettez à False pour utiliser votre vrai fichier CSV
+USE_SYNTHETIC_DATA = True 
+FILE_PATH = '/content/drive/MyDrive/CHEMIN/VERS/VOTRE/FICHIER.csv'
 
-# Chargement du fichier
-file_path = '/content/drive/MyDrive/Projet DS/Global_Cybersecurity_Threats_2015-2024.csv'
-df = pd.read_csv(file_path)
+if USE_SYNTHETIC_DATA:
+    print("MODE DÉMO : Génération de données synthétiques...")
+    from sklearn.datasets import make_classification
+    # On génère 1000 lignes, 20 colonnes, et 5 classes pour l'exemple
+    X_raw, y_raw = make_classification(n_samples=1000, n_features=20, n_informative=15, 
+                                       n_redundant=5, n_classes=5, random_state=42)
+    df = pd.DataFrame(X_raw, columns=[f'Feature_{i}' for i in range(1, 21)])
+    df['target'] = y_raw
+    # On ajoute des noms de classes plus "réels"
+    class_map = {0: 'Benign', 1: 'Malware', 2: 'Phishing', 3: 'DDoS', 4: 'Spyware'}
+    df['target'] = df['target'].map(class_map)
+    
+else:
+    try:
+        df = pd.read_csv(FILE_PATH)
+        print("Fichier chargé avec succès.")
+    except FileNotFoundError:
+        print(f"ERREUR : Fichier non trouvé à {FILE_PATH}. Vérifiez le chemin.")
+        # Arrêt forcé si pas de fichier
+        raise
 
-# --- Normalisation de la cible (Spécifique à ce dataset) ---
-# Si la colonne cible n'est pas nommée 'target', on la renomme pour standardiser le code
-if df.columns[-1] != 'target':
+# Renommage cible si nécessaire
+if df.columns[-1] != 'target' and 'target' not in df.columns:
     df.rename(columns={df.columns[-1]: 'target'}, inplace=True)
 
-# Récupération des labels réels pour gérer les 72 classes correctement plus tard
-actual_target_labels = sorted(df['target'].unique())
-target_names = [str(label) for label in actual_target_labels]
+print(f"Taille du dataset : {df.shape}")
+print(f"Classes détectées : {df['target'].unique()}\n")
 
-print(f"   >>> Dataset chargé : {df.shape[0]} lignes, {df.columns.size} colonnes.")
-print(f"   >>> Complexité du problème : {len(actual_target_labels)} classes uniques à prédire.\n")
+# ==============================================================================
+# 2. PRÉTRAITEMENT OPTIMISÉ
+# ==============================================================================
+print("--- ÉTAPE 2 : NETTOYAGE ET PRÉPARATION ---")
 
-# ------------------------------------------------------------------------------
-# 3. SIMULATION DE "DONNÉES SALES" (Mise en situation)
-# ------------------------------------------------------------------------------
-# Le monde réel est sale. On simule des trous de données (NaN) pour tester notre nettoyage.
-print("3. Sabotage contrôlé des données (Introduction de NaN)...")
+# Séparation
+X = df.drop('target', axis=1)
+y = df['target']
 
-np.random.seed(42) 
-df_dirty = df.copy()
+# Introduction artificielle de bruit (seulement si démo)
+if USE_SYNTHETIC_DATA:
+    mask = np.random.random(X.shape) < 0.05
+    X = X.mask(mask) # Introduit des NaN
 
-# On ne touche pas à la Target, mais on abîme les Features (5% de trous)
-features_columns = df.columns[:-1]
-for col in features_columns:
-    mask = np.random.random(df.shape[0]) < 0.05
-    df_dirty.loc[mask, col] = np.nan
+# Identification des types de colonnes
+num_cols = X.select_dtypes(include=np.number).columns
+cat_cols = X.select_dtypes(exclude=np.number).columns
 
-nb_missing = df_dirty.isnull().sum().sum()
-print(f"   >>> {nb_missing} valeurs manquantes générées artificiellement.\n")
+# Imputation (Remplissage des trous)
+if len(num_cols) > 0:
+    imp_num = SimpleImputer(strategy='mean')
+    X[num_cols] = imp_num.fit_transform(X[num_cols])
 
-# ------------------------------------------------------------------------------
-# 4. NETTOYAGE ET PRÉPARATION (Data Wrangling)
-# ------------------------------------------------------------------------------
-print("4. Nettoyage des données (Réparation)...")
+if len(cat_cols) > 0:
+    imp_cat = SimpleImputer(strategy='most_frequent')
+    X[cat_cols] = imp_cat.fit_transform(X[cat_cols])
+    # Encodage One-Hot pour les variables catégorielles (Features)
+    X = pd.get_dummies(X, columns=cat_cols, drop_first=True)
 
-# Séparation X (Features) et y (Target)
-X = df_dirty.drop('target', axis=1)
-y = df_dirty['target']
+# Encodage de la Cible (Target) si c'est du texte
+le = LabelEncoder()
+y_encoded = le.fit_transform(y)
+target_names = [str(cls) for cls in le.classes_]
 
-# --- Stratégie Hybride : Numérique vs Catégoriel ---
-# Contrairement au cancer (tout numérique), ici nous avons du texte.
-numerical_cols = X.select_dtypes(include=np.number).columns
-categorical_cols = X.select_dtypes(exclude=np.number).columns
+# Split Train/Test
+X_train, X_test, y_train, y_test = train_test_split(X, y_encoded, test_size=0.2, random_state=42, stratify=y_encoded)
+# Note: 'stratify' est crucial pour garder la même proportion de classes dans le train et le test
 
-# A. Imputation Numérique (Moyenne)
-if len(numerical_cols) > 0:
-    imputer_num = SimpleImputer(strategy='mean')
-    X_num = pd.DataFrame(imputer_num.fit_transform(X[numerical_cols]), 
-                         columns=numerical_cols, index=X.index)
-else:
-    X_num = pd.DataFrame(index=X.index)
+print("Données prêtes pour l'entraînement.\n")
 
-# B. Imputation Catégorielle (Mode / Plus fréquent)
-if len(categorical_cols) > 0:
-    imputer_cat = SimpleImputer(strategy='most_frequent')
-    X_cat = pd.DataFrame(imputer_cat.fit_transform(X[categorical_cols]), 
-                         columns=categorical_cols, index=X.index)
-else:
-    X_cat = pd.DataFrame(index=X.index)
+# ==============================================================================
+# 3. MODÉLISATION (Random Forest)
+# ==============================================================================
+print("--- ÉTAPE 3 : ENTRAÎNEMENT DU MODÈLE ---")
 
-# Reconstruction du dataset propre
-X_clean = pd.concat([X_num, X_cat], axis=1)
-# On remet les colonnes dans l'ordre d'origine
-X_clean = X_clean[X.columns]
+# Amélioration : class_weight='balanced' aide si certaines attaques sont rares
+model = RandomForestClassifier(n_estimators=100, 
+                               random_state=42, 
+                               class_weight='balanced',
+                               n_jobs=-1) # Utilise tous les cœurs du processeur
 
-print(f"   >>> Nettoyage terminé. Valeurs manquantes restantes : {X_clean.isnull().sum().sum()}\n")
+model.fit(X_train, y_train)
+print("Modèle entraîné.\n")
 
-# ------------------------------------------------------------------------------
-# 5. ANALYSE EXPLORATOIRE (EDA)
-# ------------------------------------------------------------------------------
-print("5. Inspection des données (EDA)...")
+# ==============================================================================
+# 4. ÉVALUATION ET DIAGRAMMES
+# ==============================================================================
+print("--- ÉTAPE 4 : VISUALISATION DES RÉSULTATS ---")
 
-# A. Statistiques descriptives
-print("   --- Statistiques (Variables Numériques) ---")
-if len(numerical_cols) > 0:
-    print(X_clean[numerical_cols].describe().T.head())
-else:
-    print("   (Pas de variables numériques)")
+y_pred = model.predict(X_test)
+acc = accuracy_score(y_test, y_pred)
+print(f"ACCURACY : {acc*100:.2f}%")
 
-# B. Visualisation de distribution
-plt.figure(figsize=(10, 5))
-if len(numerical_cols) > 0:
-    col_plot = numerical_cols[0]
-    sns.histplot(data=df, x=col_plot, hue='target', element="step", common_norm=False)
-    plt.title(f"Distribution : {col_plot} (Premier Feature Numérique)")
-elif len(categorical_cols) > 0:
-    col_plot = categorical_cols[0]
-    sns.countplot(data=df, x=col_plot, hue='target')
-    plt.title(f"Distribution : {col_plot} (Premier Feature Catégoriel)")
-    plt.xticks(rotation=45)
+# --- DIAGRAMME 1 : MATRICE DE CONFUSION ---
+plt.figure(figsize=(10, 8))
+cm = confusion_matrix(y_test, y_pred)
+# Normalisation par ligne pour voir les pourcentages d'erreur par classe
+cm_norm = cm.astype('float') / cm.sum(axis=1)[:, np.newaxis]
+
+sns.heatmap(cm, annot=True, fmt='d', cmap='Blues', 
+            xticklabels=target_names, yticklabels=target_names)
+plt.title('Matrice de Confusion (Valeurs Absolues)')
+plt.ylabel('Vraie Classe')
+plt.xlabel('Classe Prédite')
+plt.show()
+
+# --- DIAGRAMME 2 : IMPORTANCE DES FEATURES ---
+# C'est crucial pour comprendre QUELLES colonnes permettent de détecter l'attaque
+importances = model.feature_importances_
+indices = np.argsort(importances)[::-1]
+# On garde le Top 15 pour la lisibilité
+top_n = 15
+indices = indices[:top_n]
+
+plt.figure(figsize=(12, 6))
+plt.title(f"Top {top_n} des Variables les plus Importantes (Feature Importance)")
+plt.bar(range(top_n), importances[indices], align="center", color=sns.color_palette("viridis", top_n))
+plt.xticks(range(top_n), [X.columns[i] for i in indices], rotation=45, ha='right')
+plt.xlim([-1, top_n])
 plt.tight_layout()
 plt.show()
 
-# C. Matrice de Corrélation
-if len(numerical_cols) > 1:
-    plt.figure(figsize=(8, 6))
-    sns.heatmap(X_clean[numerical_cols].corr(), annot=True, cmap='coolwarm', fmt=".2f")
-    plt.title("Matrice de Corrélation")
-    plt.show()
-
-print("\n")
-
-# ------------------------------------------------------------------------------
-# 6. ENCODAGE ET SPLIT (Train / Test)
-# ------------------------------------------------------------------------------
-print("6. Préparation pour le Machine Learning...")
-
-# A. Encodage One-Hot (Transformer le texte en nombres pour l'IA)
-print("   >>> Encodage des variables catégorielles (One-Hot)...")
-X_encoded = pd.get_dummies(X_clean, columns=categorical_cols, drop_first=True)
-
-# B. Split Train/Test
-# On garde 20% pour l'examen final
-X_train, X_test, y_train, y_test = train_test_split(X_encoded, y, test_size=0.2, random_state=42)
-
-print(f"   >>> Données d'Entraînement : {X_train.shape}")
-print(f"   >>> Données de Test (Cachées) : {X_test.shape}\n")
-
-# ------------------------------------------------------------------------------
-# 7. MODÉLISATION (Random Forest)
-# ------------------------------------------------------------------------------
-print("7. Entraînement du Cerveau (Random Forest)...")
-
-# Création du modèle (100 arbres de décision qui votent)
-model = RandomForestClassifier(n_estimators=100, random_state=42)
-
-# Entraînement (Fit)
-model.fit(X_train, y_train)
-print("   >>> Modèle entraîné avec succès.\n")
-
-# ------------------------------------------------------------------------------
-# 8. ÉVALUATION (L'Heure de Vérité)
-# ------------------------------------------------------------------------------
-print("8. Résultats et Performance...")
-
-# Prédictions
-y_pred = model.predict(X_test)
-
-# A. Accuracy Globale
-acc = accuracy_score(y_test, y_pred)
-print(f"   >>> Accuracy Score : {acc*100:.2f}%")
-
-# B. Rapport détaillé (Précision, Rappel par classe)
-print("\n   >>> Rapport de Classification (Extrait) :")
-# Note : Avec 72 classes, le rapport complet est long, on l'affiche quand même
-print(classification_report(y_test, y_pred, labels=actual_target_labels, target_names=target_names))
-
-# C. La Matrice de Confusion (Visualisation des erreurs)
-cm = confusion_matrix(y_test, y_pred, labels=actual_target_labels)
-plt.figure(figsize=(12, 10))
-sns.heatmap(cm, annot=False, cmap='Blues', cbar=True) # Annot=False car 72x72 c'est illisible avec des chiffres
-plt.title(f'Matrice de Confusion ({len(actual_target_labels)} Classes)')
-plt.xlabel('Classe Prédite')
-plt.ylabel('Classe Réelle')
+# --- DIAGRAMME 3 : VISUALISATION D'UN ARBRE UNIQUE ---
+# Pour voir "comment le modèle pense"
+plt.figure(figsize=(20, 10))
+# On prend le premier arbre de la forêt (index 0)
+# On limite la profondeur (max_depth=3) pour que ce soit lisible à l'écran
+plot_tree(model.estimators_[0], 
+          feature_names=X.columns,
+          class_names=target_names,
+          filled=True, 
+          rounded=True, 
+          max_depth=3,
+          fontsize=10)
+plt.title("Visualisation simplifiée d'un arbre de décision de la forêt")
 plt.show()
 
-print("\n--- FIN DU RAPPORT ---")
-```
 1.  **Acquisition :** Chargement de 3000 lignes.
 2.  **Simulation d'erreurs :** Introduction artificielle de valeurs manquantes (NaN) dans 1350 cellules pour tester la robustesse du nettoyage.
 3.  **Nettoyage & Imputation :** Traitement différencié des variables numériques et catégorielles.
