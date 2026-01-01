@@ -79,7 +79,6 @@ Réduire le temps de réaction face à une menace.
 Diminuer les "faux positifs" (fausses alertes).
 Prioriser les interventions sur les attaques les plus critiques.
 
----
 
 ## 2. Le Code Python (Laboratoire)
 Le notebook suit la structure standard "Paillasse de laboratoire" :
@@ -106,9 +105,8 @@ plt.rcParams['figure.figsize'] = (12, 6)
 import warnings
 warnings.filterwarnings('ignore')
 
-# ==============================================================================
-# 1. CONFIGURATION ET CHARGEMENT (Avec mode Démo)
-# ==============================================================================
+# 1. CONFIGURATION ET CHARGEMENT 
+
 print("--- ÉTAPE 1 : CHARGEMENT DES DONNÉES ---")
 
 # Mettez à False pour utiliser votre vrai fichier CSV
@@ -143,9 +141,8 @@ if df.columns[-1] != 'target' and 'target' not in df.columns:
 print(f"Taille du dataset : {df.shape}")
 print(f"Classes détectées : {df['target'].unique()}\n")
 
-# ==============================================================================
 # 2. PRÉTRAITEMENT OPTIMISÉ
-# ==============================================================================
+
 print("--- ÉTAPE 2 : NETTOYAGE ET PRÉPARATION ---")
 
 # Séparation
@@ -183,9 +180,8 @@ X_train, X_test, y_train, y_test = train_test_split(X, y_encoded, test_size=0.2,
 
 print("Données prêtes pour l'entraînement.\n")
 
-# ==============================================================================
 # 3. MODÉLISATION (Random Forest)
-# ==============================================================================
+
 print("--- ÉTAPE 3 : ENTRAÎNEMENT DU MODÈLE ---")
 
 # Amélioration : class_weight='balanced' aide si certaines attaques sont rares
@@ -197,16 +193,15 @@ model = RandomForestClassifier(n_estimators=100,
 model.fit(X_train, y_train)
 print("Modèle entraîné.\n")
 
-# ==============================================================================
 # 4. ÉVALUATION ET DIAGRAMMES
-# ==============================================================================
+
 print("--- ÉTAPE 4 : VISUALISATION DES RÉSULTATS ---")
 
 y_pred = model.predict(X_test)
 acc = accuracy_score(y_test, y_pred)
 print(f"ACCURACY : {acc*100:.2f}%")
 
-# --- DIAGRAMME 1 : MATRICE DE CONFUSION ---
+#  DIAGRAMME 1 : MATRICE DE CONFUSION 
 plt.figure(figsize=(10, 8))
 cm = confusion_matrix(y_test, y_pred)
 # Normalisation par ligne pour voir les pourcentages d'erreur par classe
@@ -219,7 +214,7 @@ plt.ylabel('Vraie Classe')
 plt.xlabel('Classe Prédite')
 plt.show()
 
-# --- DIAGRAMME 2 : IMPORTANCE DES FEATURES ---
+#  DIAGRAMME 2 : IMPORTANCE DES FEATURES 
 # C'est crucial pour comprendre QUELLES colonnes permettent de détecter l'attaque
 importances = model.feature_importances_
 indices = np.argsort(importances)[::-1]
@@ -235,7 +230,7 @@ plt.xlim([-1, top_n])
 plt.tight_layout()
 plt.show()
 
-# --- DIAGRAMME 3 : VISUALISATION D'UN ARBRE UNIQUE ---
+#  DIAGRAMME 3 : VISUALISATION D'UN ARBRE UNIQUE 
 # Pour voir "comment le modèle pense"
 plt.figure(figsize=(20, 10))
 # On prend le premier arbre de la forêt (index 0)
