@@ -314,5 +314,4 @@ La visualisation générée dans le notebook (`sns.heatmap`) est une grille mass
     * Si le **Rappel** est bas pour une classe critique (ex: "Attaque Étatique"), cela signifie que le système de défense laisse passer des menaces majeures sans les détecter.
     * Si la **Précision** est basse, le système génère trop de fausses alertes, noyant les analystes de sécurité sous du bruit (fatigue d'alerte).
 
-### Conclusion
-Le projet présenté dans `CODE.ipynb` est techniquement plus complexe que le projet médical sur un point : la **cardinalité de la cible** (72 classes). Le nettoyage a réussi (0 NaN restants), mais la vigilance sur le Data Leakage et l'interprétation des résultats multiclasses reste primordiale pour un déploiement industriel.
+
